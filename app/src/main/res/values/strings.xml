@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">IssueViewer</string>
+
+    <string name="main_title">Issues from Github on Rails Repo!</string>
+</resources>
