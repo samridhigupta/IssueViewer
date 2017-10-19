@@ -9,7 +9,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 import com.vine.issueviewer.app.R;
-import com.vine.issueviewer.app.controller.LoadFeedData;
+import com.vine.issueviewer.app.intent.LoadFeedData;
 import com.vine.issueviewer.app.helper.NetworkUtil;
 import com.vine.issueviewer.app.model.Issue;
 

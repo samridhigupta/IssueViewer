@@ -1,14 +1,15 @@
-package com.vine.issueviewer.app.controller;
+package com.vine.issueviewer.app.intent;
 
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
 import com.vine.issueviewer.app.helper.GitIssuesUrlBuilder;
+import com.vine.issueviewer.app.model.Comment;
 import com.vine.issueviewer.app.model.Issue;
 import com.vine.issueviewer.app.model.Response;
 import com.vine.issueviewer.app.service.HttpService;
-import com.vine.issueviewer.app.view.MainActivity;
+import com.vine.issueviewer.app.view.OnIssueClickListener;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,20 +23,20 @@ import java.util.ArrayList;
 /**
  * Created by samridhi on 05/03/16.
  */
-public class LoadFeedData extends AsyncTask<String,Void, Response> {
+public class LoadCommentData extends AsyncTask<String,Void, Response> {
 
-    private static final String LOG_TAG = LoadFeedData.class.getSimpleName();
+    private static final String LOG_TAG = LoadCommentData.class.getSimpleName();
     private Response response;
     private final HttpService httpService;
     private Context context;
-    private MainActivity activity;
-    private int pageNum;
+    private OnIssueClickListener activity;
+    private Issue issue;
 
-    public LoadFeedData(Context context, MainActivity mainActivity, int pageNum) {
+    public LoadCommentData(Context context, OnIssueClickListener mainActivity, Issue issue) {
         super();
         this.context = context;
         this.activity = mainActivity;
-        this.pageNum = pageNum;
+        this.issue = issue;
         this.response = new Response(new JSONArray(),
                 HttpURLConnection.HTTP_NO_CONTENT);
         this.httpService = new HttpService(context);
@@ -44,11 +45,9 @@ public class LoadFeedData extends AsyncTask<String,Void, Response> {
 
     @Override
     protected Response doInBackground(String... params) {
-        final String STATE_PARAM = "state";
         final String ORG_NAME = "rails";
         final String REPO_NAME = "rails";
-        String state = "open";
-        String urlString = new GitIssuesUrlBuilder(ORG_NAME,REPO_NAME).buildUrlWith(STATE_PARAM,state,pageNum);
+        String urlString = new GitIssuesUrlBuilder(ORG_NAME,REPO_NAME).buildUrlWith(issue);
         try {
             URL url = new URL(urlString);
             Log.d(LOG_TAG, "starting http request on url: " + urlString);
@@ -63,20 +62,18 @@ public class LoadFeedData extends AsyncTask<String,Void, Response> {
     }
 
     private void getDataIntoList(JSONArray jsonArrayResponse) {
-        ArrayList<Issue> issues = new ArrayList<Issue>();
+        ArrayList<Comment> comments = new ArrayList<Comment>();
         for (int i = 0; i < jsonArrayResponse.length(); i++) {
             try {
                 JSONObject jsonObject = jsonArrayResponse.getJSONObject(i);
-                String title = jsonObject.getString("title");
                 String body = jsonObject.getString("body");
-                String commentUrl = jsonObject.getString("comments_url");
-                int issueNumber = jsonObject.getInt("number");
-                issues.add(new Issue(title,body,commentUrl,issueNumber));
+                String username = jsonObject.getJSONObject("user").getString("login");
+                comments.add(new Comment(body,username));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-        activity.setAdaptorWith(issues);
+        activity.setCommentAdaptorWith(comments);
     }
 
     @Override
@@ -90,10 +87,11 @@ public class LoadFeedData extends AsyncTask<String,Void, Response> {
                 Toast.makeText(context, "Response received from api is null, check internet Connection", Toast.LENGTH_SHORT).show();
             }else{
                 Log.d(LOG_TAG, "Response code "+ response.getCode());
-                Toast.makeText(context, "Error in loading data Response code "+ response.getCode(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Response code "+ response.getCode(), Toast.LENGTH_SHORT).show();
             }
         }
     }
+
 
 }
 
